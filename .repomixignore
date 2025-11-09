@@ -1,0 +1,169 @@
+# Add patterns to ignore here, one per line
+# env:
+.env
+.env.local
+.env.development
+.env.production
+.env.*.local
+
+# Node.js
+node_modules/
+.npm/
+.cache/
+.parcel-cache/
+.next/
+out/
+.turbo/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+**/pyenv/**
+**/python/pyenv/**
+
+# Go
+go/pkg/
+pkg/mod/
+**/go/pkg/mod/**
+vendor/
+*.sum
+go.work
+
+# PHP
+vendor/
+composer.phar
+.phpunit.result.cache
+
+# Ruby
+.bundle/
+vendor/bundle/
+.gem/
+*.gem
+
+# Rust
+target/
+Cargo.lock
+**/*.rs.bk
+
+# Java / Maven / Gradle
+.m2/
+.gradle/
+target/
+*.class
+*.jar
+*.war
+
+# .NET / C#
+bin/
+obj/
+packages/
+*.dll
+*.exe
+*.pdb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+**/vim/bundle/**
+**/vim/autoload/**
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+screenshots/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# PM2
+.pm2/
+pm2.log
+ecosystem.config.js
+
+# Security
+*.pem
+*.key
+*.crt
+secrets/
+credentials/
+
+# Deployment
+railway-env-vars.txt
+*-env-vars.txt
+set-railway-vars.sh
+*-secrets.sh
+
+# Nixpacks generated files
+.nixpacks/
+
+# Debug artifacts
+debug-*.png
+results.png
+*-diagnostic.html
+*-source.html
+
+# Server artifacts
+server/screenshots/
+server/logs/
+server/*.log
+server/*.html
+server/*.deb
+
+# Build artifacts
+dist/
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+coverage/
+
+# Claude
+.claude/
+
+# Repomix outputs
+repomix-output.xml
+repomix-output.txt

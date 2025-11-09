@@ -12,6 +12,8 @@ logs/
 condense/
 document-enhancement-impact-measurement/
 directory-scan-reports/
+repomix-output.xml
+repomix-output.txt
 
 # OS
 .DS_Store
