@@ -1,0 +1,11 @@
+id: duplicate-error-handling
+language: javascript
+rule:
+  pattern: |
+    try {
+      $$$BODY
+    } catch ($ERROR) {
+      $$$HANDLER
+    }
+message: Found try-catch error handling pattern
+note: This pattern is used for detecting similar error handling across files

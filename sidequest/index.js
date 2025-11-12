@@ -1,9 +1,12 @@
 import cron from 'node-cron';
 import { RepomixWorker } from './repomix-worker.js';
 import { DirectoryScanner } from './directory-scanner.js';
+import { config } from './config.js';
 import path from 'path';
-import os from 'os';
 import fs from 'fs/promises';
+import { createComponentLogger } from './logger.js';
+
+const logger = createComponentLogger('RepomixCronApp');
 
 /**
  * Main application entry point
@@ -11,39 +14,17 @@ import fs from 'fs/promises';
 class RepomixCronApp {
   constructor() {
     this.worker = new RepomixWorker({
-      maxConcurrent: 3, // Process 3 repos at a time
-      outputBaseDir: '../condense',
-      codeBaseDir: path.join(os.homedir(), 'code'),
-      logDir: '../logs',
-      sentryDsn: process.env.SENTRY_DSN,
+      maxConcurrent: config.maxConcurrent,
+      outputBaseDir: config.outputBaseDir,
+      codeBaseDir: config.codeBaseDir,
+      logDir: config.logDir,
+      sentryDsn: config.sentryDsn,
     });
 
     this.scanner = new DirectoryScanner({
-      baseDir: path.join(os.homedir(), 'code'),
-      outputDir: '../directory-scan-reports',
-      excludeDirs: [
-        'node_modules',
-        '.git',
-        'dist',
-        'build',
-        'coverage',
-        '.next',
-        '.nuxt',
-        'vendor',
-        '__pycache__',
-        '.venv',
-        'venv',
-        'target',
-        '.idea',
-        '.vscode',
-        'jobs',
-        '.DS_Store', // OS
-        'Thumbs.db',
-        '.vscode', //IDE
-        '.idea/'
-        '*.swp'
-        '*.swo'
-      ],
+      baseDir: config.codeBaseDir,
+      outputDir: config.scanReportsDir,
+      excludeDirs: config.excludeDirs,
     });
 
     this.setupEventListeners();
@@ -54,21 +35,28 @@ class RepomixCronApp {
    */
   setupEventListeners() {
     this.worker.on('job:created', (job) => {
-      console.log(`✓ Job created: ${job.id}`);
+      logger.info({ jobId: job.id }, 'Job created');
     });
 
     this.worker.on('job:started', (job) => {
-      console.log(`▶ Job started: ${job.id} - ${job.data.relativePath}`);
+      logger.info({ jobId: job.id, relativePath: job.data.relativePath }, 'Job started');
     });
 
     this.worker.on('job:completed', (job) => {
       const duration = job.completedAt - job.startedAt;
-      console.log(`✓ Job completed: ${job.id} - ${job.data.relativePath} (${duration}ms)`);
+      logger.info({
+        jobId: job.id,
+        relativePath: job.data.relativePath,
+        duration
+      }, 'Job completed');
     });
 
     this.worker.on('job:failed', (job) => {
-      console.error(`✗ Job failed: ${job.id} - ${job.data.relativePath}`);
-      console.error(`  Error: ${job.error}`);
+      logger.error({
+        jobId: job.id,
+        relativePath: job.data.relativePath,
+        error: job.error
+      }, 'Job failed');
     });
   }
 
@@ -76,24 +64,25 @@ class RepomixCronApp {
    * Run repomix on all directories
    */
   async runRepomixOnAllDirectories() {
-    console.log('\n=== Starting Repomix Run ===');
-    console.log(`Scanning directories in: ${this.scanner.baseDir}`);
+    logger.info({ baseDir: this.scanner.baseDir }, 'Starting repomix run');
 
     const startTime = Date.now();
 
     try {
       // Scan all directories
       const directories = await this.scanner.scanDirectories();
-      console.log(`Found ${directories.length} directories to process`);
+      logger.info({ directoryCount: directories.length }, 'Directories found');
 
       // Save scan results
-      console.log('\n📊 Saving scan results...');
+      logger.info('Saving scan results');
       const scanResults = await this.scanner.generateAndSaveScanResults(directories);
-      console.log(`  Scan report: ${scanResults.reportPath}`);
-      console.log(`  Directory tree: ${scanResults.treePath}`);
-      console.log(`  Summary: ${scanResults.summaryPath}`);
-      console.log(`  Max depth: ${scanResults.summary.maxDepth}`);
-      console.log(`  Top directories: ${scanResults.summary.stats.topDirectoryNames.slice(0, 3).map(d => d.name).join(', ')}\n`);
+      logger.info({
+        reportPath: scanResults.reportPath,
+        treePath: scanResults.treePath,
+        summaryPath: scanResults.summaryPath,
+        maxDepth: scanResults.summary.maxDepth,
+        topDirectories: scanResults.summary.stats.topDirectoryNames.slice(0, 3).map(d => d.name)
+      }, 'Scan results saved');
 
       // Create jobs for each directory
       let jobCount = 0;
@@ -102,7 +91,7 @@ class RepomixCronApp {
         jobCount++;
       }
 
-      console.log(`Created ${jobCount} jobs`);
+      logger.info({ jobCount }, 'Jobs created');
 
       // Wait for all jobs to complete
       await this.waitForCompletion();
@@ -110,17 +99,18 @@ class RepomixCronApp {
       const duration = Date.now() - startTime;
       const stats = this.worker.getStats();
 
-      console.log('\n=== Run Complete ===');
-      console.log(`Duration: ${Math.round(duration / 1000)}s`);
-      console.log(`Total jobs: ${stats.total}`);
-      console.log(`Completed: ${stats.completed}`);
-      console.log(`Failed: ${stats.failed}`);
+      logger.info({
+        durationSeconds: Math.round(duration / 1000),
+        totalJobs: stats.total,
+        completed: stats.completed,
+        failed: stats.failed
+      }, 'Repomix run complete');
 
       // Save run summary
       await this.saveRunSummary(stats, duration);
 
     } catch (error) {
-      console.error('Error during repomix run:', error);
+      logger.error({ err: error }, 'Error during repomix run');
       throw error;
     }
   }
@@ -159,48 +149,48 @@ class RepomixCronApp {
    */
   setupCronJob(schedule = '0 2 * * *') {
     // Default: Run at 2 AM every day
-    console.log(`Setting up cron job with schedule: ${schedule}`);
+    logger.info({ schedule }, 'Setting up cron job');
 
     cron.schedule(schedule, async () => {
-      console.log(`\nCron job triggered at ${new Date().toISOString()}`);
+      logger.info({ triggerTime: new Date().toISOString() }, 'Cron job triggered');
       try {
         await this.runRepomixOnAllDirectories();
       } catch (error) {
-        console.error('Cron job failed:', error);
+        logger.error({ err: error }, 'Cron job failed');
       }
     });
 
-    console.log('Cron job scheduled successfully');
+    logger.info('Cron job scheduled successfully');
   }
 
   /**
    * Start the application
    */
   async start() {
-    console.log('=== Repomix Cron Sidequest Server ===');
-    console.log(`Code directory: ${this.scanner.baseDir}`);
-    console.log(`Output directory: ${this.worker.outputBaseDir}`);
-    console.log(`Log directory: ${this.worker.logDir}`);
+    logger.info({
+      codeDirectory: this.scanner.baseDir,
+      outputDirectory: this.worker.outputBaseDir,
+      logDirectory: this.worker.logDir
+    }, 'Repomix Cron Sidequest Server starting');
 
     // Setup cron job
     // Schedule: '0 2 * * *' = 2 AM daily
     // For testing: '*/5 * * * *' = every 5 minutes
-    const schedule = process.env.CRON_SCHEDULE || '0 2 * * *';
-    this.setupCronJob(schedule);
+    this.setupCronJob(config.repomixSchedule);
 
     // Run immediately on startup if requested
-    if (process.env.RUN_ON_STARTUP === 'true') {
-      console.log('\nRunning immediately (RUN_ON_STARTUP=true)...');
+    if (config.runOnStartup) {
+      logger.info('Running immediately (RUN_ON_STARTUP=true)');
       await this.runRepomixOnAllDirectories();
     }
 
-    console.log('\nServer running. Press Ctrl+C to exit.');
+    logger.info('Server running. Press Ctrl+C to exit');
   }
 }
 
 // Start the application
 const app = new RepomixCronApp();
 app.start().catch((error) => {
-  console.error('Fatal error:', error);
+  logger.error({ err: error }, 'Fatal error');
   process.exit(1);
 });

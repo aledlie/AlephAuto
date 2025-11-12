@@ -1,6 +1,9 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { createComponentLogger } from './logger.js';
+
+const logger = createComponentLogger('DirectoryScanner');
 
 /**
  * DirectoryScanner - Recursively scans directories
@@ -86,7 +89,7 @@ export class DirectoryScanner {
       }
     } catch (error) {
       // Log but don't fail on permission errors
-      console.warn(`Warning: Cannot access ${currentPath}:`, error.message);
+      logger.warn({ path: currentPath, error: error.message }, 'Cannot access directory');
     }
   }
 

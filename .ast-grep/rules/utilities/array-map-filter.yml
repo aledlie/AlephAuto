@@ -1,0 +1,13 @@
+id: array-map-filter
+language: javascript
+rule:
+  any:
+    - pattern: $ARR.map($$$)
+    - pattern: $ARR.filter($$$)
+    - pattern: $ARR.reduce($$$)
+    - pattern: $ARR.forEach($$$)
+    - pattern: $ARR.find($$$)
+    - pattern: $ARR.findIndex($$$)
+message: Array iteration method usage
+severity: info
+note: Track array manipulation patterns for potential utility consolidation

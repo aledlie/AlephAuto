@@ -1,0 +1,13 @@
+id: await-patterns
+language: javascript
+rule:
+  pattern: |
+    try {
+      const $VAR = await $CALL
+      $$$
+    } catch ($ERR) {
+      $$$
+    }
+message: Async/await error handling pattern
+severity: info
+note: Common async patterns that could be abstracted

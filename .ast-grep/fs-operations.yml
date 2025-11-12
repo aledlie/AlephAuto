@@ -1,0 +1,6 @@
+id: fs-operations
+language: javascript
+rule:
+  pattern: await fs.$METHOD($$$ARGS)
+message: Found file system operation pattern
+note: Track all fs promise operations for consolidation analysis

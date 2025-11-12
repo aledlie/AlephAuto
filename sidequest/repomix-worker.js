@@ -1,11 +1,11 @@
 import { SidequestServer } from './server.js';
-import { exec } from 'child_process';
-import { promisify } from 'util';
+import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { createComponentLogger } from './logger.js';
 
-const execAsync = promisify(exec);
+const logger = createComponentLogger('RepomixWorker');
 
 /**
  * RepomixWorker - Executes repomix jobs
@@ -29,23 +29,16 @@ export class RepomixWorker extends SidequestServer {
 
     const outputFile = path.join(outputDir, 'repomix-output.txt');
 
-    // Run repomix command
-    const command = `cd "${sourceDir}" && repomix`;
-
-    console.log(`[${job.id}] Running repomix for: ${sourceDir}`);
-    console.log(`[${job.id}] Output will be saved to: ${outputFile}`);
+    logger.info({ jobId: job.id, sourceDir, outputFile }, 'Running repomix');
 
     try {
-      const { stdout, stderr } = await execAsync(command, {
-        maxBuffer: 50 * 1024 * 1024, // 50MB buffer
-        timeout: 600000, // 10 minute timeout
-      });
+      const { stdout, stderr } = await this.#runRepomixCommand(sourceDir);
 
       // Save the output to the appropriate location
       await fs.writeFile(outputFile, stdout);
 
       if (stderr) {
-        console.warn(`[${job.id}] Warnings:`, stderr);
+        logger.warn({ jobId: job.id, stderr }, 'Repomix warnings');
       }
 
       return {
@@ -62,6 +55,49 @@ export class RepomixWorker extends SidequestServer {
       }
       throw error;
     }
+  }
+
+  /**
+   * Securely run repomix command using spawn (prevents command injection)
+   * @private
+   */
+  #runRepomixCommand(cwd) {
+    return new Promise((resolve, reject) => {
+      const proc = spawn('repomix', [], {
+        cwd,
+        timeout: 600000, // 10 minute timeout
+        maxBuffer: 50 * 1024 * 1024, // 50MB buffer
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      proc.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      proc.stderr.on('data', (data) => {
+        stderr += data.toString();
+      });
+
+      proc.on('close', (code) => {
+        if (code === 0) {
+          resolve({ stdout, stderr });
+        } else {
+          const error = new Error(`repomix exited with code ${code}`);
+          error.code = code;
+          error.stdout = stdout;
+          error.stderr = stderr;
+          reject(error);
+        }
+      });
+
+      proc.on('error', (error) => {
+        error.stdout = stdout;
+        error.stderr = stderr;
+        reject(error);
+      });
+    });
   }
 
   /**

@@ -1,0 +1,14 @@
+id: object-manipulation
+language: javascript
+rule:
+  any:
+    - pattern: Object.keys($OBJ)
+    - pattern: Object.values($OBJ)
+    - pattern: Object.entries($OBJ)
+    - pattern: Object.assign($$$)
+    - pattern: '{ ...$OBJ }'
+    - pattern: JSON.stringify($$$)
+    - pattern: JSON.parse($$$)
+message: Object manipulation pattern
+severity: info
+note: Track object operations for potential utility consolidation

@@ -1,0 +1,17 @@
+id: string-manipulation
+language: javascript
+rule:
+  any:
+    - pattern: $STR.trim()
+    - pattern: $STR.toLowerCase()
+    - pattern: $STR.toUpperCase()
+    - pattern: $STR.split($$$)
+    - pattern: $STR.replace($$$)
+    - pattern: $STR.slice($$$)
+    - pattern: $STR.substring($$$)
+    - pattern: $STR.startsWith($$$)
+    - pattern: $STR.endsWith($$$)
+    - pattern: $STR.includes($$$)
+message: String manipulation pattern
+severity: info
+note: Track string operations for potential utility consolidation

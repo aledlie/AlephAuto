@@ -74,6 +74,142 @@ npm install -g repomix
 npx repomix --version
 ```
 
+## MCP Servers
+
+This project has the following Model Context Protocol (MCP) servers configured for enhanced AI capabilities:
+
+### Installed MCP Servers
+
+#### 1. Sentry MCP (Remote HTTP) ⚠️ Needs Authentication
+- **URL**: https://mcp.sentry.dev/mcp
+- **Transport**: HTTP (Remote)
+- **Purpose**: Error tracking and performance monitoring integration
+- **Features**:
+  - OAuth authentication via Sentry organization
+  - 16+ tool calls for error analysis
+  - Automated root cause analysis with Seer AI
+  - Real-time error monitoring and debugging
+- **Status**: Configured, requires OAuth authentication
+- **Documentation**: https://docs.sentry.io/product/sentry-mcp/
+
+#### 2. Redis MCP ✓ Connected
+- **Command**: `uvx --from redis-mcp-server@latest redis-mcp-server --url redis://localhost:6379/0`
+- **Transport**: STDIO (Python/uvx)
+- **Purpose**: Queue management and data operations
+- **Features**:
+  - List operations for queues and message brokers
+  - Sorted sets for priority queues
+  - Redis Streams for event management
+  - Full Redis data structure support (strings, hashes, JSON, etc.)
+- **Status**: Connected to local Redis instance
+- **Prerequisites**: Redis server running on localhost:6379
+- **Documentation**: https://github.com/redis/mcp-redis
+
+#### 3. TaskQueue MCP ✓ Connected
+- **Command**: `npx -y taskqueue-mcp`
+- **Transport**: STDIO (Node.js)
+- **Purpose**: AI task management and workflow structuring
+- **Features**:
+  - Structured task queue for multi-step workflows
+  - User approval checkpoints
+  - Task state management
+  - AI agent workflow guidance
+- **Status**: Connected
+- **Use Case**: Managing complex AI-driven tasks with approval gates
+- **Documentation**: https://www.npmjs.com/package/taskqueue-mcp
+
+#### 4. Filesystem MCP ✓ Connected
+- **Command**: `npx -y @modelcontextprotocol/server-filesystem /Users/alyshialedlie/code/jobs`
+- **Transport**: STDIO (Node.js)
+- **Purpose**: Log file access and filesystem operations
+- **Features**:
+  - Read/write access to project directory
+  - Log file analysis
+  - Directory traversal
+- **Status**: Connected
+- **Scope**: Limited to `/Users/alyshialedlie/code/jobs` directory
+- **Use Case**: Accessing and analyzing job logs and outputs
+
+### Managing MCP Servers
+
+#### List All MCP Servers
+```bash
+claude mcp list
+```
+
+#### View Available Tools
+```bash
+claude mcp tools <server-name>
+```
+
+#### Add New MCP Server
+```bash
+# STDIO transport
+claude mcp add --transport stdio <name> -- <command> [args]
+
+# HTTP transport
+claude mcp add --transport http <name> <url>
+```
+
+#### Remove MCP Server
+```bash
+claude mcp remove <name>
+```
+
+### MCP Integration Points
+
+**Sentry MCP** integrates with:
+- Error tracking in `index.js` and `doc-enhancement-pipeline.js`
+- Sentry transactions for performance monitoring
+- Error breadcrumbs for debugging
+
+**Redis MCP** enables:
+- Queue management for BullMQ (if implemented)
+- Task queue operations
+- Session data management
+- Caching layer operations
+
+**TaskQueue MCP** provides:
+- Structured workflow for complex job processing
+- Approval gates for critical operations
+- Multi-step task coordination
+
+**Filesystem MCP** allows:
+- AI-driven log analysis
+- Automated report generation
+- Output file inspection and validation
+
+### Configuration Files
+
+MCP server configurations are stored in:
+- **Global**: `~/.claude.json`
+- **Project**: `/Users/alyshialedlie/code/jobs/.claude/settings.local.json`
+
+### Troubleshooting MCP Servers
+
+#### Server Not Connecting
+```bash
+# Check server health
+claude mcp list
+
+# View server logs
+# Logs are typically in ~/.claude/logs/
+```
+
+#### Authentication Issues (Sentry)
+The Sentry MCP requires OAuth authentication. You'll be prompted to authenticate when first using Sentry tools.
+
+#### Redis Connection Errors
+Ensure Redis is running:
+```bash
+redis-cli ping  # Should return PONG
+```
+
+Start Redis if needed:
+```bash
+brew services start redis  # macOS with Homebrew
+```
+
 ## Configuration
 
 ### Environment Variables

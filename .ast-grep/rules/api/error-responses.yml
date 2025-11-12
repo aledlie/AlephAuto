@@ -1,0 +1,14 @@
+id: error-responses
+language: javascript
+rule:
+  any:
+    - pattern: $RES.status($CODE).json({ error: $$$})
+    - pattern: $RES.status($CODE).send($$$)
+    - pattern: return $RES.status(400)$$$
+    - pattern: return $RES.status(401)$$$
+    - pattern: return $RES.status(403)$$$
+    - pattern: return $RES.status(404)$$$
+    - pattern: return $RES.status(500)$$$
+message: API error response pattern
+severity: info
+note: Error response patterns that could be standardized utility functions

@@ -1,5 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { createComponentLogger } from '../logger.js';
+
+const logger = createComponentLogger('READMEScanner');
 
 /**
  * READMEScanner - Recursively scans for README.md files
@@ -87,7 +90,10 @@ export class READMEScanner {
       }
     } catch (error) {
       // Log but don't fail on permission errors
-      console.warn(`Warning: Cannot access ${currentPath}:`, error.message);
+      logger.warn({
+        path: currentPath,
+        error: error.message
+      }, 'Cannot access directory');
     }
   }
 
@@ -167,7 +173,10 @@ export class READMEScanner {
       // Try to get git remote
       context.gitRemote = await this.getGitRemote(dirPath);
     } catch (error) {
-      console.warn(`Warning gathering context for ${dirPath}:`, error.message);
+      logger.warn({
+        dirPath,
+        error: error.message
+      }, 'Error gathering context');
     }
 
     return context;

@@ -1,0 +1,17 @@
+# ast-grep configuration for Code Consolidation System
+# Pattern library for detecting duplicate code across repositories
+
+# Rule directories
+ruleDirs:
+  - rules
+
+# Test directories
+testConfigs:
+  - testDir: tests
+
+# Language-specific configurations
+# (using defaults for all supported languages)
+
+# Output format
+# Use JSON for programmatic processing
+outputFormat: json

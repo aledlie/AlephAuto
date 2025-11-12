@@ -1,0 +1,14 @@
+id: promise-chains
+language: javascript
+rule:
+  any:
+    - pattern: $PROMISE.then($$$).catch($$$)
+    - pattern: $PROMISE.then($$$).then($$$)
+    - pattern: $PROMISE.catch($$$)
+    - pattern: $PROMISE.finally($$$)
+    - pattern: Promise.all($$$)
+    - pattern: Promise.race($$$)
+    - pattern: Promise.allSettled($$$)
+message: Promise chain pattern
+severity: info
+note: Promise patterns that could be refactored to async/await

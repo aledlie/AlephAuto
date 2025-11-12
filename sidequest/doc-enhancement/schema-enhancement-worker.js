@@ -1,8 +1,11 @@
 import { SidequestServer } from '../server.js';
 import { SchemaMCPTools } from './schema-mcp-tools.js';
 import { READMEScanner } from './readme-scanner.js';
+import { createComponentLogger } from '../logger.js';
 import fs from 'fs/promises';
 import path from 'path';
+
+const logger = createComponentLogger('SchemaEnhancementWorker');
 
 /**
  * SchemaEnhancementWorker - Enhances README files with Schema.org markup
@@ -27,7 +30,7 @@ export class SchemaEnhancementWorker extends SidequestServer {
   async runJobHandler(job) {
     const { readmePath, relativePath, context } = job.data;
 
-    console.log(`[${job.id}] Enhancing: ${readmePath}`);
+    logger.info({ jobId: job.id, readmePath }, 'Enhancing README');
 
     try {
       // Read README content
@@ -35,7 +38,7 @@ export class SchemaEnhancementWorker extends SidequestServer {
 
       // Check if already has schema
       if (originalContent.includes('<script type="application/ld+json">')) {
-        console.log(`[${job.id}] Skipped - already has schema markup`);
+        logger.info({ jobId: job.id }, 'Skipped - already has schema markup');
         this.stats.skipped++;
         return {
           status: 'skipped',
@@ -52,7 +55,7 @@ export class SchemaEnhancementWorker extends SidequestServer {
         context
       );
 
-      console.log(`[${job.id}] Schema type: ${schemaType}`);
+      logger.info({ jobId: job.id, schemaType }, 'Schema type detected');
 
       // Generate schema markup
       const schema = await this.mcpTools.generateSchema(
@@ -69,7 +72,10 @@ export class SchemaEnhancementWorker extends SidequestServer {
       }
 
       if (validation.warnings.length > 0) {
-        console.warn(`[${job.id}] Warnings: ${validation.warnings.join(', ')}`);
+        logger.warn({
+          jobId: job.id,
+          warnings: validation.warnings
+        }, 'Schema validation warnings');
       }
 
       // Inject schema into content
@@ -82,14 +88,18 @@ export class SchemaEnhancementWorker extends SidequestServer {
         schema
       );
 
-      console.log(`[${job.id}] Impact score: ${impact.impactScore}/100 (${impact.rating})`);
+      logger.info({
+        jobId: job.id,
+        impactScore: impact.impactScore,
+        rating: impact.rating
+      }, 'Impact analysis complete');
 
       // Save enhanced README
       if (!this.dryRun) {
         await fs.writeFile(readmePath, enhancedContent, 'utf-8');
-        console.log(`[${job.id}] Enhanced README saved`);
+        logger.info({ jobId: job.id }, 'Enhanced README saved');
       } else {
-        console.log(`[${job.id}] Dry run - no changes made`);
+        logger.info({ jobId: job.id }, 'Dry run - no changes made');
       }
 
       // Save impact report

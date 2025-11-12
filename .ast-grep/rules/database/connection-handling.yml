@@ -1,0 +1,13 @@
+id: connection-handling
+language: javascript
+rule:
+  any:
+    - pattern: $DB.connect($$$)
+    - pattern: $DB.disconnect($$$)
+    - pattern: $DB.close($$$)
+    - pattern: $POOL.getConnection($$$)
+    - pattern: $CONN.release($$$)
+    - pattern: $CONN.end($$$)
+message: Database connection handling pattern
+severity: info
+note: Connection management patterns that could be consolidated

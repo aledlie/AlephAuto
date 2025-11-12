@@ -1,0 +1,19 @@
+id: config-objects
+language: javascript
+rule:
+  any:
+    - pattern: |
+        const config = {
+          $$$
+        }
+    - pattern: |
+        export const config = {
+          $$$
+        }
+    - pattern: |
+        module.exports = {
+          $$$CONFIG
+        }
+message: Configuration object pattern
+severity: info
+note: Configuration patterns that could be standardized

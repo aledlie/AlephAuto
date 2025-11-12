@@ -1,0 +1,12 @@
+id: type-checking
+language: javascript
+rule:
+  any:
+    - pattern: typeof $VAR === '$TYPE'
+    - pattern: typeof $VAR !== '$TYPE'
+    - pattern: Array.isArray($VAR)
+    - pattern: $VAR instanceof $CLASS
+    - pattern: Object.prototype.toString.call($VAR)
+message: Type checking pattern detected
+severity: info
+note: Common type checking logic that could be abstracted to utility functions

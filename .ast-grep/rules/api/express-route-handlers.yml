@@ -1,0 +1,14 @@
+id: express-route-handlers
+language: javascript
+rule:
+  any:
+    - pattern: $APP.get($PATH, $$$)
+    - pattern: $APP.post($PATH, $$$)
+    - pattern: $APP.put($PATH, $$$)
+    - pattern: $APP.delete($PATH, $$$)
+    - pattern: $APP.patch($PATH, $$$)
+    - pattern: $ROUTER.get($PATH, $$$)
+    - pattern: $ROUTER.post($PATH, $$$)
+message: Express route handler pattern
+severity: info
+note: Track route handler patterns for API consolidation

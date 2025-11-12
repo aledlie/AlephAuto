@@ -1,0 +1,12 @@
+id: console-statements
+language: javascript
+rule:
+  any:
+    - pattern: console.log($$$)
+    - pattern: console.error($$$)
+    - pattern: console.warn($$$)
+    - pattern: console.info($$$)
+    - pattern: console.debug($$$)
+message: Console statement found
+severity: warning
+note: Console statements should be replaced with structured logger

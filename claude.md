@@ -1,5 +1,47 @@
 # Repository File Tree
 
+## Authentication & Configuration
+
+This repository uses **Doppler** for all authentication and environment variable management. All sensitive credentials, API keys, and configuration values are stored securely in Doppler and injected at runtime.
+
+### Using Doppler
+
+All commands that require environment variables should be run with Doppler:
+
+```bash
+doppler run -- <command>
+```
+
+**Examples:**
+```bash
+# Run the application
+doppler run -- node sidequest/index.js
+
+# Run tests
+doppler run -- npm test
+
+# Start the server
+doppler run -- node sidequest/server.js
+```
+
+### Configuration File
+
+The `config.yml` file documents all environment variables used by the application, including their default values. However, actual values are managed by Doppler and should never be hardcoded.
+
+### Code Configuration
+
+All sidequest/ directory code uses the centralized `sidequest/config.js` module which reads from environment variables injected by Doppler. Never use `process.env` directly in application code - always import from `config.js`:
+
+```javascript
+import { config } from './config.js';
+
+// ✅ Correct - use config object
+const dsn = config.sentryDsn;
+
+// ❌ Incorrect - don't use process.env directly
+const dsn = process.env.SENTRY_DSN;
+```
+
 ## Structure Overview
 
 This repository contains various projects and utilities organized into the following structure:

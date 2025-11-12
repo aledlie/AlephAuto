@@ -1,0 +1,23 @@
+id: validation
+language: javascript
+rule:
+  any:
+    - pattern: |
+        if (!$VAR) {
+          throw new Error($$$)
+        }
+    - pattern: |
+        if ($COND) {
+          throw new Error($$$)
+        }
+    - pattern: |
+        if (!$VAR) {
+          return $$$
+        }
+    - pattern: |
+        if ($VAR === undefined || $VAR === null) {
+          $$$
+        }
+message: Validation pattern detected
+severity: info
+note: Common validation logic that could be consolidated into validators

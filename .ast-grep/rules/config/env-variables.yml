@@ -1,0 +1,11 @@
+id: env-variables
+language: javascript
+rule:
+  any:
+    - pattern: process.env.$VAR
+    - pattern: process.env.$VAR || $DEFAULT
+    - pattern: process.env.$VAR ?? $DEFAULT
+    - pattern: const $VAR = process.env.$NAME
+message: Environment variable access
+severity: info
+note: Direct env access that should use centralized config module

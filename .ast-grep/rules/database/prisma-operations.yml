@@ -1,0 +1,15 @@
+id: prisma-operations
+language: javascript
+rule:
+  any:
+    - pattern: $PRISMA.$MODEL.findUnique($$$)
+    - pattern: $PRISMA.$MODEL.findMany($$$)
+    - pattern: $PRISMA.$MODEL.findFirst($$$)
+    - pattern: $PRISMA.$MODEL.create($$$)
+    - pattern: $PRISMA.$MODEL.update($$$)
+    - pattern: $PRISMA.$MODEL.delete($$$)
+    - pattern: $PRISMA.$MODEL.upsert($$$)
+    - pattern: $PRISMA.$MODEL.count($$$)
+message: Prisma database operation
+severity: info
+note: Track Prisma patterns for repository pattern consolidation

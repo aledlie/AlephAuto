@@ -1,0 +1,11 @@
+id: logger-patterns
+language: javascript
+rule:
+  any:
+    - pattern: logger.$LEVEL($$$)
+    - pattern: $LOGGER.$LEVEL($$$)
+    - pattern: logger.$LEVEL({ $$$}, $MSG)
+    - pattern: $LOGGER.child($$$)
+message: Structured logger usage
+severity: info
+note: Track logger usage patterns for consistency analysis

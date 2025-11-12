@@ -1,0 +1,39 @@
+# Doppler Configuration
+# These values are managed by Doppler and injected as environment variables
+# Run commands with: doppler run -- <command>
+
+# Sentry Configuration
+SENTRY_DSN: ${SENTRY_DSN}
+SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT}
+
+# Application Configuration
+NODE_ENV: ${NODE_ENV:-production}
+LOG_LEVEL: ${LOG_LEVEL:-info}
+
+# Directory Configuration
+CODE_BASE_DIR: ${CODE_BASE_DIR}
+OUTPUT_BASE_DIR: ${OUTPUT_BASE_DIR}
+LOG_DIR: ${LOG_DIR}
+SCAN_REPORTS_DIR: ${SCAN_REPORTS_DIR}
+
+# Job Processing
+MAX_CONCURRENT: ${MAX_CONCURRENT:-5}
+
+# Cron Schedules
+CRON_SCHEDULE: ${CRON_SCHEDULE:-0 2 * * *}
+DOC_CRON_SCHEDULE: ${DOC_CRON_SCHEDULE:-0 3 * * *}
+
+# Feature Flags
+RUN_ON_STARTUP: ${RUN_ON_STARTUP:-false}
+FORCE_ENHANCEMENT: ${FORCE_ENHANCEMENT:-false}
+
+# Repomix Settings
+REPOMIX_TIMEOUT: ${REPOMIX_TIMEOUT:-600000}
+REPOMIX_MAX_BUFFER: ${REPOMIX_MAX_BUFFER:-52428800}
+
+# Schema.org MCP Integration
+SCHEMA_MCP_URL: ${SCHEMA_MCP_URL}
+
+# Health Check
+HEALTH_CHECK_PORT: ${HEALTH_CHECK_PORT:-3000}
+

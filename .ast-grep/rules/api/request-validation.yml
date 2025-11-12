@@ -1,0 +1,20 @@
+id: request-validation
+language: javascript
+rule:
+  any:
+    - pattern: |
+        if (!$REQ.body.$FIELD) {
+          return $RES.status(400)$$$
+        }
+    - pattern: |
+        if (!$REQ.params.$FIELD) {
+          return $RES.status(400)$$$
+        }
+    - pattern: |
+        if (!$REQ.query.$FIELD) {
+          return $RES.status(400)$$$
+        }
+    - pattern: $REQ.body.$FIELD || $DEFAULT
+message: Request validation pattern
+severity: info
+note: Request validation logic that could be consolidated into validators

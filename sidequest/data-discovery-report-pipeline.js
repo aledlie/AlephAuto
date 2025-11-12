@@ -1,8 +1,12 @@
 import cron from 'node-cron';
 import { SchemaEnhancementWorker } from './doc-enhancement/schema-enhancement-worker.js';
 import { READMEScanner } from './doc-enhancement/readme-scanner.js';
+import { config } from './config.js';
+import { createComponentLogger } from './logger.js';
 import path from 'path';
 import os from 'os';
+
+const logger = createComponentLogger('DocEnhancementPipeline');
 
 /**
  * Documentation Enhancement Pipeline
@@ -14,30 +18,16 @@ class DocEnhancementPipeline {
     this.dryRun = options.dryRun || false;
 
     this.worker = new SchemaEnhancementWorker({
-      maxConcurrent: 2, // Process 2 READMEs at a time
-      outputBaseDir: '../document-enhancement-impact-measurement',
-      logDir: '../logs',
-      sentryDsn: process.env.SENTRY_DSN,
+      maxConcurrent: config.maxConcurrent,
+      outputBaseDir: config.outputBaseDir,
+      logDir: config.logDir,
+      sentryDsn: config.sentryDsn,
       dryRun: this.dryRun,
     });
 
     this.scanner = new READMEScanner({
       baseDir: this.targetDir,
-      excludeDirs: [
-        'node_modules',
-        '.git',
-        'dist',
-        'build',
-        'coverage',
-        '.next',
-        '__pycache__',
-        '.venv',
-        'venv',
-        '_site',
-        '.cache',
-        'target',
-        'jobs',
-      ],
+      excludeDirs: config.excludeDirs,
     });
 
     this.setupEventListeners();
@@ -48,28 +38,41 @@ class DocEnhancementPipeline {
    */
   setupEventListeners() {
     this.worker.on('job:created', (job) => {
-      console.log(`✓ Job created: ${job.id}`);
+      logger.info({ jobId: job.id }, 'Job created');
     });
 
     this.worker.on('job:started', (job) => {
-      console.log(`▶ Job started: ${job.id}`);
-      console.log(`  README: ${job.data.relativePath}`);
+      logger.info({
+        jobId: job.id,
+        relativePath: job.data.relativePath
+      }, 'Job started');
     });
 
     this.worker.on('job:completed', (job) => {
       const duration = job.completedAt - job.startedAt;
-      console.log(`✓ Job completed: ${job.id} (${duration}ms)`);
       if (job.result.status === 'enhanced') {
-        console.log(`  Schema: ${job.result.schemaType}`);
-        console.log(`  Impact: ${job.result.impact.impactScore}/100 (${job.result.impact.rating})`);
+        logger.info({
+          jobId: job.id,
+          duration,
+          schemaType: job.result.schemaType,
+          impactScore: job.result.impact.impactScore,
+          rating: job.result.impact.rating
+        }, 'Job completed - enhanced');
       } else {
-        console.log(`  Status: ${job.result.status} - ${job.result.reason}`);
+        logger.info({
+          jobId: job.id,
+          duration,
+          status: job.result.status,
+          reason: job.result.reason
+        }, 'Job completed - skipped');
       }
     });
 
     this.worker.on('job:failed', (job) => {
-      console.error(`✗ Job failed: ${job.id}`);
-      console.error(`  Error: ${job.error}`);
+      logger.error({
+        jobId: job.id,
+        error: job.error
+      }, 'Job failed');
     });
   }
 
@@ -77,38 +80,41 @@ class DocEnhancementPipeline {
    * Run enhancement on all README files
    */
   async runEnhancementPipeline() {
-    console.log('\n=== Documentation Enhancement Pipeline ===');
-    console.log(`Target directory: ${this.targetDir}`);
-    console.log(`Dry run: ${this.dryRun}`);
-    console.log('==========================================\n');
+    logger.info({
+      targetDir: this.targetDir,
+      dryRun: this.dryRun
+    }, 'Starting documentation enhancement pipeline');
 
     const startTime = Date.now();
 
     try {
       // Scan for README files
-      console.log('📂 Scanning for README files...');
+      logger.info('Scanning for README files');
       const readmes = await this.scanner.scanREADMEs();
-      console.log(`Found ${readmes.length} README files\n`);
+      logger.info({ count: readmes.length }, 'README files found');
 
       if (readmes.length === 0) {
-        console.log('No README files found to process');
+        logger.warn('No README files found to process');
         return;
       }
 
       // Get initial stats
       const scanStats = await this.scanner.getStats(readmes);
-      console.log('📊 Scan Statistics:');
-      console.log(`  Total: ${scanStats.total}`);
-      console.log(`  With schema: ${scanStats.withSchema}`);
-      console.log(`  Without schema: ${scanStats.withoutSchema}\n`);
+      logger.info({
+        total: scanStats.total,
+        withSchema: scanStats.withSchema,
+        withoutSchema: scanStats.withoutSchema
+      }, 'Scan statistics');
 
       // Create jobs for each README
-      console.log('🚀 Creating enhancement jobs...\n');
+      logger.info('Creating enhancement jobs');
       for (const readme of readmes) {
         // Skip if already has schema (unless explicitly overriding)
         const hasSchema = await this.scanner.hasSchemaMarkup(readme.fullPath);
-        if (hasSchema && !process.env.FORCE_ENHANCEMENT) {
-          console.log(`⏭️  Skipping ${readme.relativePath} (already has schema)`);
+        if (hasSchema && !config.forceEnhancement) {
+          logger.debug({
+            relativePath: readme.relativePath
+          }, 'Skipping - already has schema');
           continue;
         }
 
@@ -119,27 +125,28 @@ class DocEnhancementPipeline {
         this.worker.createEnhancementJob(readme, context);
       }
 
-      console.log('');
-
       // Wait for all jobs to complete
       await this.waitForCompletion();
 
       const duration = Date.now() - startTime;
       const stats = this.worker.getEnhancementStats();
 
-      console.log('\n=== Enhancement Complete ===');
-      console.log(`Duration: ${Math.round(duration / 1000)}s`);
-      console.log(`Enhanced: ${stats.enhanced}`);
-      console.log(`Skipped: ${stats.skipped}`);
-      console.log(`Failed: ${stats.failed}`);
-      console.log(`Success rate: ${stats.successRate}%`);
+      logger.info({
+        duration: Math.round(duration / 1000),
+        enhanced: stats.enhanced,
+        skipped: stats.skipped,
+        failed: stats.failed,
+        successRate: stats.successRate
+      }, 'Enhancement pipeline complete');
 
       // Generate summary report
       const summary = await this.worker.generateSummaryReport();
-      console.log(`\n📄 Summary saved to: ${summary.outputDirectory}`);
+      logger.info({
+        outputDirectory: summary.outputDirectory
+      }, 'Summary report saved');
 
     } catch (error) {
-      console.error('Error during enhancement pipeline:', error);
+      logger.error({ err: error }, 'Error during enhancement pipeline');
       throw error;
     }
   }
@@ -164,43 +171,43 @@ class DocEnhancementPipeline {
    */
   setupCronJob(schedule = '0 3 * * *') {
     // Default: Run at 3 AM every day
-    console.log(`Setting up cron job with schedule: ${schedule}`);
+    logger.info({ schedule }, 'Setting up cron job');
 
     cron.schedule(schedule, async () => {
-      console.log(`\nCron job triggered at ${new Date().toISOString()}`);
+      logger.info({ timestamp: new Date().toISOString() }, 'Cron job triggered');
       try {
         await this.runEnhancementPipeline();
       } catch (error) {
-        console.error('Cron job failed:', error);
+        logger.error({ err: error }, 'Cron job failed');
       }
     });
 
-    console.log('Cron job scheduled successfully');
+    logger.info('Cron job scheduled successfully');
   }
 
   /**
    * Start the pipeline
    */
   async start() {
-    console.log('=== Documentation Enhancement Pipeline Server ===');
-    console.log(`Target directory: ${this.targetDir}`);
-    console.log(`Output directory: ${this.worker.outputBaseDir}`);
-    console.log(`Log directory: ${this.worker.logDir}`);
-    console.log(`Dry run: ${this.dryRun}`);
+    logger.info({
+      targetDir: this.targetDir,
+      outputBaseDir: this.worker.outputBaseDir,
+      logDir: this.worker.logDir,
+      dryRun: this.dryRun
+    }, 'Documentation Enhancement Pipeline Server starting');
 
     // Setup cron job
     // Schedule: '0 3 * * *' = 3 AM daily
     // For testing: '*/10 * * * *' = every 10 minutes
-    const schedule = process.env.DOC_CRON_SCHEDULE || '0 3 * * *';
-    this.setupCronJob(schedule);
+    this.setupCronJob(config.docSchedule);
 
     // Run immediately on startup if requested
-    if (process.env.RUN_ON_STARTUP === 'true') {
-      console.log('\nRunning immediately (RUN_ON_STARTUP=true)...');
+    if (config.runOnStartup) {
+      logger.info('Running immediately (RUN_ON_STARTUP=true)');
       await this.runEnhancementPipeline();
     }
 
-    console.log('\nServer running. Press Ctrl+C to exit.');
+    logger.info('Server running. Press Ctrl+C to exit.');
   }
 }
 
@@ -220,6 +227,6 @@ for (let i = 0; i < args.length; i++) {
 // Start the pipeline
 const pipeline = new DocEnhancementPipeline(options);
 pipeline.start().catch((error) => {
-  console.error('Fatal error:', error);
+  logger.error({ err: error }, 'Fatal error');
   process.exit(1);
 });

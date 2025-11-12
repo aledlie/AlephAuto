@@ -1,3 +1,5 @@
+import { config } from '../config.js';
+
 /**
  * Schema.org MCP Tools Integration
  * Provides wrapper methods for Schema.org MCP server tools
@@ -5,7 +7,7 @@
 
 export class SchemaMCPTools {
   constructor(options = {}) {
-    this.mcpServerUrl = options.mcpServerUrl || process.env.SCHEMA_MCP_URL;
+    this.mcpServerUrl = options.mcpServerUrl || config.schemaMcpUrl;
     this.useRealMCP = options.useRealMCP || false;
   }
 

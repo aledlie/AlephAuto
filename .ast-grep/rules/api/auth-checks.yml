@@ -1,0 +1,17 @@
+id: auth-checks
+language: javascript
+rule:
+  any:
+    - pattern: |
+        if (!$AUTH) {
+          return $RES.status(401)$$$
+        }
+    - pattern: |
+        if (!$USER) {
+          return $RES.status(403)$$$
+        }
+    - pattern: $REQ.headers.authorization
+    - pattern: $REQ.cookies.$TOKEN
+message: Authentication/authorization check pattern
+severity: info
+note: Common auth patterns that could be middleware or utility functions
