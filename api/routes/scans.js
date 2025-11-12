@@ -50,7 +50,7 @@ router.post('/start', strictRateLimiter, async (req, res, next) => {
       path: repositoryPath
     }]);
 
-    res.json({
+    res.status(201).json({
       success: true,
       job_id: jobId,
       status_url: `/api/scans/${jobId}/status`,
@@ -94,7 +94,7 @@ router.post('/start-multi', strictRateLimiter, async (req, res, next) => {
 
     const job = worker.scheduleScan('inter-project', repositories, groupName);
 
-    res.json({
+    res.status(201).json({
       success: true,
       job_id: jobId,
       repository_count: repositoryPaths.length,

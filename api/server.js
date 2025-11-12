@@ -76,8 +76,8 @@ const broadcaster = new ScanEventBroadcaster(wss);
 // Make broadcaster available to routes
 app.set('broadcaster', broadcaster);
 
-// WebSocket status endpoint
-app.get('/api/ws/status', (req, res) => {
+// WebSocket status endpoint (before API routes to avoid conflict)
+app.get('/ws/status', (req, res) => {
   const clientInfo = wss.getClientInfo();
   res.json({
     ...clientInfo,
