@@ -1,0 +1,134 @@
+{
+  "$schema": "./scan-repositories.schema.json",
+  "version": "1.0.0",
+  "scanConfig": {
+    "enabled": true,
+    "schedule": "0 2 * * *",
+    "maxRepositoriesPerNight": 10,
+    "maxConcurrentScans": 3,
+    "scanTimeout": 600000,
+    "retryAttempts": 2,
+    "retryDelay": 60000
+  },
+  "cacheConfig": {
+    "enabled": true,
+    "provider": "redis",
+    "ttl": 2592000,
+    "invalidateOnChange": true,
+    "trackGitCommits": true,
+    "trackUncommittedChanges": true
+  },
+  "repositories": [
+    {
+      "name": "sidequest",
+      "path": "/Users/alyshialedlie/code/jobs/sidequest",
+      "priority": "high",
+      "scanFrequency": "daily",
+      "enabled": true,
+      "tags": [
+        "internal",
+        "job-management"
+      ],
+      "excludePatterns": [
+        "*.test.js",
+        "*.spec.js"
+      ],
+      "lastScannedAt": "2025-11-12T09:02:40.513Z",
+      "scanHistory": [
+        {
+          "timestamp": "2025-11-12T09:02:40.513Z",
+          "status": "success",
+          "duration": 0.171,
+          "duplicatesFound": 0
+        },
+        {
+          "timestamp": "2025-11-12T09:02:27.417Z",
+          "status": "success",
+          "duration": 0.94,
+          "duplicatesFound": 76
+        },
+        {
+          "timestamp": "2025-11-12T09:00:58.058Z",
+          "status": "success",
+          "duration": 0.824,
+          "duplicatesFound": 81
+        }
+      ]
+    },
+    {
+      "name": "lib",
+      "path": "/Users/alyshialedlie/code/jobs/lib",
+      "priority": "high",
+      "scanFrequency": "daily",
+      "enabled": true,
+      "tags": [
+        "internal",
+        "duplicate-detection"
+      ],
+      "excludePatterns": [
+        "*.test.js",
+        "*.spec.js"
+      ],
+      "lastScannedAt": "2025-11-12T09:02:40.513Z",
+      "scanHistory": [
+        {
+          "timestamp": "2025-11-12T09:02:40.513Z",
+          "status": "success",
+          "duration": 0.171,
+          "duplicatesFound": 0
+        }
+      ]
+    },
+    {
+      "name": "test",
+      "path": "/Users/alyshialedlie/code/jobs/test",
+      "priority": "medium",
+      "scanFrequency": "weekly",
+      "enabled": true,
+      "tags": [
+        "internal",
+        "testing"
+      ],
+      "excludePatterns": []
+    }
+  ],
+  "repositoryGroups": [
+    {
+      "name": "internal-tools",
+      "description": "Internal job management and duplicate detection tools",
+      "repositories": [
+        "sidequest",
+        "lib"
+      ],
+      "scanType": "inter-project",
+      "enabled": true
+    }
+  ],
+  "scanDefaults": {
+    "languages": [
+      "javascript",
+      "typescript",
+      "python"
+    ],
+    "includeSourceCode": true,
+    "includeCodeBlocks": true,
+    "generateReports": true,
+    "reportFormats": [
+      "html",
+      "markdown",
+      "json",
+      "summary"
+    ]
+  },
+  "notifications": {
+    "enabled": true,
+    "channels": [
+      "sentry",
+      "log"
+    ],
+    "onSuccess": false,
+    "onFailure": true,
+    "onHighImpactDuplicates": true,
+    "highImpactThreshold": 75
+  }
+}
