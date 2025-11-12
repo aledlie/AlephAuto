@@ -38,31 +38,32 @@ def extract_code_blocks(pattern_matches: List[Dict], repository_info: Dict) -> L
             # Generate unique block ID
             block_id = f"cb_{hashlib.sha256(f"{match['file_path']}:{match['line_start']}".encode()).hexdigest()[:12]}"
 
-            # Map pattern_id to category (basic mapping)
+            # Map pattern_id to category (must match SemanticCategory enum)
             category_map = {
                 'object-manipulation': 'utility',
                 'array-map-filter': 'utility',
                 'string-manipulation': 'utility',
                 'type-checking': 'utility',
-                'validation': 'utility',
-                'express-route-handlers': 'api',
-                'auth-checks': 'api',
-                'error-responses': 'api',
-                'request-validation': 'api',
-                'prisma-operations': 'database',
-                'query-builders': 'database',
-                'connection-handling': 'database',
-                'await-patterns': 'async',
-                'promise-chains': 'async',
-                'env-variables': 'config',
-                'config-objects': 'config',
-                'console-statements': 'logging',
-                'logger-patterns': 'logging'
+                'validation': 'validator',
+                'express-route-handlers': 'api_handler',
+                'auth-checks': 'auth_check',
+                'error-responses': 'error_handler',
+                'request-validation': 'validator',
+                'prisma-operations': 'database_operation',
+                'query-builders': 'database_operation',
+                'connection-handling': 'database_operation',
+                'await-patterns': 'async_pattern',
+                'promise-chains': 'async_pattern',
+                'env-variables': 'config_access',
+                'config-objects': 'config_access',
+                'console-statements': 'logger',
+                'logger-patterns': 'logger'
             }
 
             category = category_map.get(match['rule_id'], 'utility')
 
             # Create CodeBlock
+            # Note: file_path from ast-grep is already relative to repository root
             block = CodeBlock(
                 block_id=block_id,
                 pattern_id=match['rule_id'],
@@ -71,7 +72,7 @@ def extract_code_blocks(pattern_matches: List[Dict], repository_info: Dict) -> L
                     line_start=match['line_start'],
                     line_end=match.get('line_end', match['line_start'])
                 ),
-                relative_path=Path(match['file_path']).relative_to(repository_info['path']).as_posix(),
+                relative_path=match['file_path'],  # Already relative from ast-grep
                 source_code=match.get('matched_text', ''),
                 language='javascript',  # TODO: Detect from file extension
                 category=category,
@@ -82,7 +83,9 @@ def extract_code_blocks(pattern_matches: List[Dict], repository_info: Dict) -> L
             blocks.append(block)
 
         except Exception as e:
-            print(f"Warning: Failed to extract block {i}: {e}", file=sys.stderr)
+            print(f"Warning: Failed to extract block {i} from {match.get('file_path', 'unknown')}: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
             continue
 
     return blocks
@@ -110,7 +113,7 @@ def group_duplicates(blocks: List[CodeBlock]) -> List[DuplicateGroup]:
                 pattern_id=group_blocks[0].pattern_id,
                 member_block_ids=[b.block_id for b in group_blocks],
                 similarity_score=1.0,  # Exact matches
-                similarity_method='exact',
+                similarity_method='exact_match',  # Must match SimilarityMethod enum
                 category=group_blocks[0].category,
                 language=group_blocks[0].language,
                 occurrence_count=len(group_blocks),
@@ -195,11 +198,11 @@ def main():
             'high_priority_suggestions': len([s for s in suggestions if s.impact_score >= 75])
         }
 
-        # Output result as JSON
+        # Output result as JSON (use mode='json' to serialize datetime objects)
         result = {
-            'code_blocks': [b.model_dump() for b in blocks],
-            'duplicate_groups': [g.model_dump() for g in groups],
-            'suggestions': [s.model_dump() for s in suggestions],
+            'code_blocks': [b.model_dump(mode='json') for b in blocks],
+            'duplicate_groups': [g.model_dump(mode='json') for g in groups],
+            'suggestions': [s.model_dump(mode='json') for s in suggestions],
             'metrics': metrics
         }
 
