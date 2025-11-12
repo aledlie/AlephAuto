@@ -5,10 +5,14 @@ rule:
     - pattern: $DB.query($$$)
     - pattern: $DB.execute($$$)
     - pattern: $CONN.query($$$)
-    - pattern: SELECT * FROM $$$
-    - pattern: INSERT INTO $$$
-    - pattern: UPDATE $TABLE SET $$$
-    - pattern: DELETE FROM $$$
+    - pattern: |
+        `SELECT * FROM $$$`
+    - pattern: |
+        `INSERT INTO $$$`
+    - pattern: |
+        `UPDATE $$$ SET $$$`
+    - pattern: |
+        `DELETE FROM $$$`
 message: Database query pattern
 severity: info
 note: Raw query patterns that could benefit from query builder abstraction
